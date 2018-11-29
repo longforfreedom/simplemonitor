@@ -12,7 +12,7 @@ create table smonitor_storage_info(
 )DEFAULT CHARSET=utf8;
 
 
-
+----------------------统一记录到一张表中------------------------------
 create table smonitor_metric_info(
     hostname varchar(50),
     ip varchar(50),
@@ -20,3 +20,8 @@ create table smonitor_metric_info(
     metric varchar(100),
     val varchar(100)
 )DEFAULT CHARSET=utf8;
+
+cpu.count
+memory.total
+disk.{dirname}.total
+yarn.{queuename}.usage

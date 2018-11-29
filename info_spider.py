@@ -57,13 +57,13 @@ class infoCollector:
         meminfo = {'hostname': self.hostname,
                     'ip': self.ip,
                     'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
-                    'store_device': "_memory",
-                    'store_mountpoint': "_memory",
-                    'store_total': vm.total,
-                    'store_free': vm.available,
-                    'store_used': vm.used,
-                    'percent': vm.percent }
-        self.saver.save_meminfo(meminfo)
+                    'metrics':{
+                    'memory.total': vm.total,
+                    'memory.free': vm.available,
+                    'memory.used': vm.used,
+                    'memory.percent': vm.percent }
+                }
+        self.saver.save_metric(meminfo)
 
         # 交换分区
         # swap = psutil.swap_memory()
@@ -78,7 +78,7 @@ class infoCollector:
             diskinfo = {'hostname': self.hostname,
                         'ip': self.ip,
                         'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
-                        'store_device': i.device,
+                        'metrics':{},
                         'store_mountpoint': i.mountpoint,
                         'store_total': disk.total,
                         'store_free': disk.free,
@@ -119,7 +119,8 @@ class InfoSaver:
 
     def save_networkinfo(self, networkinfo):
         print(networkinfo)
-
+    def save_metric(self,metrics):
+        pass
     def close(self):
         pass
 
