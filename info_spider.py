@@ -9,21 +9,22 @@ import socket
 #  磁盘：总空间，已使用，空间，使用率 （分目录)
 #  IO: 磁盘、网络
 #############################################
+
 def gethostname():
     #import platform
-    #platform.node()
-    return socket.gethostname() 
+    # platform.node()
+    return socket.gethostname()
 
 def getip():
-    ## IP可能不太准，只能手工去配置了！！
+    # IP可能不太准，只能手工去配置了！！
     #import platform
-    #platform.node()
+    # platform.node()
     try:
-        ip = socket.gethostbyname(gethostname()) 
+        ip = socket.gethostbyname(gethostname())
     except:
-        ip='unknow'
+        ip = 'unknow'
+    return ip
 
-    return ip 
 
 class infoCollector:
     def __init__(self, saver=None):
@@ -36,33 +37,32 @@ class infoCollector:
             self.saver = saver
 
     def __send_cpuinfo(self):
-        # 逻辑CPU数量
-        #cpu_count = psutil.cpu_count()
-        #psutil.pids() #进程数
-        #cpu = psutil.cpu_percent(percpu=True)
-        #print(cpu)
-        ci = psutil.cpu_times()
-        # cpuinfo = {'hostname': self.hostname,
-        #             'ip': self.ip,
-        #             'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
-        #             'store_total': ci.user,
-        #             'store_free': ci.system,
-        #             'store_used': ci.idle,
-        #             'percent': vm.percent }
-        self.saver.save_cpuinfo(ci)
+        # psutil.pids() #进程数
+        ci = psutil.cpu_times_percent()
+        cpuinfo = {'hostname': self.hostname,
+                   'ip': self.ip,
+                   'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
+                   'metrics': {
+                       'cpu.count': psutil.cpu_count(),   # 逻辑CPU数量
+                       'cpu.percent': psutil.cpu_percent(),  # 返回当前系统CPU利用率
+                       'cpu.system_percent': ci.system,
+                       'cpu.user_percent': ci.user,
+                       'cpu.idle_percent': ci.idle}
+                   }
+        self.saver.save_metric(cpuinfo)
 
     def __send_meminfo(self):
         # 物理内存
         vm = psutil.virtual_memory()
         meminfo = {'hostname': self.hostname,
-                    'ip': self.ip,
-                    'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
-                    'metrics':{
-                    'memory.total': vm.total,
-                    'memory.free': vm.available,
-                    'memory.used': vm.used,
-                    'memory.percent': vm.percent }
-                }
+                   'ip': self.ip,
+                   'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
+                   'metrics': {
+                       'memory.total': vm.total,
+                       'memory.free': vm.available,
+                       'memory.used': vm.used,
+                       'memory.percent': vm.percent}
+                   }
         self.saver.save_metric(meminfo)
 
         # 交换分区
@@ -72,19 +72,20 @@ class infoCollector:
         # 磁盘分区信息
         # NOTE:如果你只想获取某些指定文件系统的大小，可以在这里写死
         for i in psutil.disk_partitions():
-            #print(i)
+            # print(i)
             # 磁盘使用情况
             disk = psutil.disk_usage(i.mountpoint)
             diskinfo = {'hostname': self.hostname,
                         'ip': self.ip,
                         'ts': time.strftime("%Y%m%d%H%M%S", time.localtime()),
-                        'metrics':{},
-                        'store_mountpoint': i.mountpoint,
-                        'store_total': disk.total,
-                        'store_free': disk.free,
-                        'store_used': disk.used,
-                        'percent': disk.percent}
-            self.saver.save_diskinfo(diskinfo)
+                        'metrics': {
+                            'disk.'+i.mountpoint+'.total': disk.total,
+                            'disk.'+i.mountpoint+'.free': disk.free,
+                            'disk.'+i.mountpoint+'.used': disk.used,
+                            'disk.'+i.mountpoint+'.percent': disk.percent
+                        }
+                        }
+            self.saver.save_metric(diskinfo)
 
         # 磁盘IO
         # dio=psutil.disk_io_counters()
@@ -93,49 +94,51 @@ class infoCollector:
     def __send_networkinfo(self):
         # 网络信息
         nio = psutil.net_io_counters(pernic=True)
-        self.saver.save_networkinfo(nio)
+        self.saver.save_metric(nio)
 
     def send(self):
         self.__send_cpuinfo()
         self.__send_meminfo()
         self.__send_diskinfo()
-        #self.__send_networkinfo()
+        # self.__send_networkinfo()
         self.saver.close()
+
 
 class InfoSaver:
     """ 用来实现将监控数据写到数据库、MQ、ES、文件系统、HTTP Rest等位置,默认只是打印"""
-
     def __init__(self):
         pass
 
-    def save_cpuinfo(self, cpuinfo):
-        print(cpuinfo)
+    # def save_cpuinfo(self, cpuinfo):
+    #     print(cpuinfo)
 
-    def save_meminfo(self, meminfo):
-        print(meminfo)
+    # def save_meminfo(self, meminfo):
+    #     print(meminfo)
 
-    def save_diskinfo(self, diskinfo):
-        print(diskinfo)
+    # def save_diskinfo(self, diskinfo):
+    #     print(diskinfo)
 
-    def save_networkinfo(self, networkinfo):
-        print(networkinfo)
-    def save_metric(self,metrics):
-        pass
+    # def save_networkinfo(self, networkinfo):
+    #     print(networkinfo)
+
+    def save_metric(self, metrics):
+        print("="*30)
+        print(metrics['hostname'] + ":" + metrics['ip']+":"+metrics['ts'])
+        for k in metrics['metrics']:
+            print(k+ ":" + str(metrics['metrics'][k]))
+
     def close(self):
         pass
 
 
-
 if __name__ == "__main__":
-    # saver = InfoSaver()
-    from infoMySqlSaver import InfoMySqlSaver
-    saver = InfoMySqlSaver()
+    saver = InfoSaver()
+    #from infoMySqlSaver import InfoMySqlSaver
+    #saver = InfoMySqlSaver()
     spider = infoCollector(saver)
     spider.send()
 
 
-# print("-----------cpu_count-----------")
-# print(psutil.cpu_count())  # 返回系统中逻辑cpu的数量
 # print("-----------cpu_freq-----------")
 # print(psutil.cpu_freq())  # 返回CPU频率
 # print("-----------cpu_percent-----------")

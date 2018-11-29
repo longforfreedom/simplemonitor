@@ -13,15 +13,10 @@ create table smonitor_storage_info(
 
 
 ----------------------统一记录到一张表中------------------------------
-create table smonitor_metric_info(
+create table smonitor_metrics(
     hostname varchar(50),
     ip varchar(50),
     ts varchar(20),
-    metric varchar(100),
+    metric varchar(200),
     val varchar(100)
 )DEFAULT CHARSET=utf8;
-
-cpu.count
-memory.total
-disk.{dirname}.total
-yarn.{queuename}.usage

@@ -3,6 +3,7 @@
 import pymysql
 from info_spider import InfoSaver
 
+
 class InfoMySqlSaver(InfoSaver):
     def __init__(self):
         self.db = pymysql.connect("10.10.10.100", "root", "admin", "test")
@@ -13,20 +14,18 @@ class InfoMySqlSaver(InfoSaver):
     def save_meminfo(self, meminfo):
         self.save_diskinfo(meminfo)
 
-    def save_diskinfo(self, storageinfo):
-        print("save storageinfo" + str(storageinfo))
-        print(storageinfo.keys())
+    def save_diskinfo(self, metrics):
+        # print("save storageinfo" + str(metrics))
+        # print(metrics.keys())
         try:
             with self.db.cursor() as cursor:
-                cursor.execute("insert into smonitor_storage_info values('%s','%s','%s','%s','%s',%s,%s,%s,%s)"  % (storageinfo['hostname'],
-                            storageinfo['ip'],
-                            storageinfo['ts'],
-                            storageinfo['store_device'].replace("\\","/"),
-                            storageinfo['store_mountpoint'].replace("\\","/"),
-                            storageinfo['store_total'],
-                            storageinfo['store_free'],
-                            storageinfo['store_used'],
-                            storageinfo['percent']))
+                for k in metrics['metrics']:
+                    #print(k+ ":" + str(metrics['metrics'][k]))
+                    cursor.execute("insert into smonitor_metrics values('%s','%s','%s','%s','%s')" %
+                                   (metrics['hostname'], metrics['ip'],
+                                    metrics['ts'], k, metrics['metrics'][k])
+                                   )
+
             self.db.commit()
         finally:
             self.db.close()
