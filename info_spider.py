@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys
 import time
 import psutil
 import socket
@@ -101,26 +102,13 @@ class infoCollector:
         self.__send_meminfo()
         self.__send_diskinfo()
         # self.__send_networkinfo()
-        self.saver.close()
+        
 
 
 class InfoSaver:
     """ 用来实现将监控数据写到数据库、MQ、ES、文件系统、HTTP Rest等位置,默认只是打印"""
     def __init__(self):
         pass
-
-    # def save_cpuinfo(self, cpuinfo):
-    #     print(cpuinfo)
-
-    # def save_meminfo(self, meminfo):
-    #     print(meminfo)
-
-    # def save_diskinfo(self, diskinfo):
-    #     print(diskinfo)
-
-    # def save_networkinfo(self, networkinfo):
-    #     print(networkinfo)
-
     def save_metric(self, metrics):
         print("="*30)
         print(metrics['hostname'] + ":" + metrics['ip']+":"+metrics['ts'])
@@ -130,12 +118,22 @@ class InfoSaver:
     def close(self):
         pass
 
-
 if __name__ == "__main__":
-    saver = InfoSaver()
-    #from infoMySqlSaver import InfoMySqlSaver
-    #saver = InfoMySqlSaver()
+    #saver = InfoSaver()
+    from infoMySqlSaver import InfoMySqlSaver
+    saver = InfoMySqlSaver(db_host="10.10.10.100",db_user="root",db_pwd="admin",db_name="test")
+    #saver = InfoMySqlSaver(db_host="10.113.221.39",db_user="aiapp",db_pwd="tFc_99w_",db_name="md")
     spider = infoCollector(saver)
+    if(len(sys.argv) == 1):
+        spider = infoCollector(saver)
+    if( len(sys.argv) == 3):
+        #收集yarn的资源队列信息
+        from scInfoCollector import SCInfoCollector
+        queue_name = sys.argv[1]
+        only_yarn =  True if sys.argv[2].lower() == 'true' else False
+        spider = SCInfoCollector(queue_name,only_yarn,saver)
+    else:
+        sys.exit("参数错误！")
     spider.send()
 
 

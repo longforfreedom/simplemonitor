@@ -5,18 +5,10 @@ from info_spider import InfoSaver
 
 
 class InfoMySqlSaver(InfoSaver):
-    def __init__(self):
-        self.db = pymysql.connect("10.10.10.100", "root", "admin", "test")
+    def __init__(self,db_host="10.10.10.100",db_user="root",db_pwd="admin",db_name="test"):
+        self.db = pymysql.connect(db_host, db_user, db_pwd, db_name)
 
-    def save_cpuinfo(self, cpuinfo):
-        print(cpuinfo)
-
-    def save_meminfo(self, meminfo):
-        self.save_diskinfo(meminfo)
-
-    def save_diskinfo(self, metrics):
-        # print("save storageinfo" + str(metrics))
-        # print(metrics.keys())
+    def save_metric(self, metrics):
         try:
             with self.db.cursor() as cursor:
                 for k in metrics['metrics']:
@@ -25,10 +17,10 @@ class InfoMySqlSaver(InfoSaver):
                                    (metrics['hostname'], metrics['ip'],
                                     metrics['ts'], k, metrics['metrics'][k])
                                    )
-
             self.db.commit()
         finally:
-            self.db.close()
+            pass
+            #self.close()
 
     def save_networkinfo(self, networkinfo):
         print(networkinfo)
