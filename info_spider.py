@@ -126,7 +126,7 @@ if __name__ == "__main__":
     spider = infoCollector(saver)
     if(len(sys.argv) == 1):
         spider = infoCollector(saver)
-    if( len(sys.argv) == 3):
+    elif( len(sys.argv) == 3):
         #收集yarn的资源队列信息
         from scInfoCollector import SCInfoCollector
         queue_name = sys.argv[1]
